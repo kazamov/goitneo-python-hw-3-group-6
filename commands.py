@@ -3,9 +3,9 @@ from errors import InvalidCommandError, InvalidValueFieldError
 
 
 def input_error(func):
-    def inner(address_book: AddressBook, args):
+    def inner(self, address_book: AddressBook, args):
         try:
-            return func(address_book, args)
+            return func(self, address_book, args)
 
         except InvalidCommandError as e:
             return e.message
@@ -15,124 +15,232 @@ def input_error(func):
     return inner
 
 
-@input_error
-def hello_command_handler(*_):
-    return "How can I help you?"
+class Command:
+    def __init__(
+        self, name: str, description: str, alias: str = None, is_final: bool = False
+    ):
+        self.name = name
+        self.description = description
+        self.alias = alias
+        self.is_final = is_final
+
+    def __str__(self):
+        return f"{self.name} - {self.description}"
+
+    def validate(self, args):
+        return True
+
+    def execute(self, address_book: AddressBook, args):
+        pass
 
 
-@input_error
-def add_contact_handler(address_book: AddressBook, args):
-    if len(args) != 2:
-        raise InvalidCommandError("add", "Name and phone are required.")
+class HelloCommand(Command):
+    def __init__(self):
+        super().__init__("hello", "Show greeting message.")
 
-    name, phone = args
-
-    record = address_book.find(name)
-    if record:
-        record.add_phone(phone)
-        return "Contact updated."
-
-    record = Record(name)
-    record.add_phone(phone)
-
-    address_book.add_record(record)
-
-    return "Contact added."
+    def execute(self, *_):
+        return "How can I help you?"
 
 
-@input_error
-def change_contact_handler(address_book: AddressBook, args):
-    if len(args) != 3:
-        raise InvalidCommandError(
-            "change", "Name, previous phone and new phone are required."
+class AddContactCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "add",
+            "Add a new contact. Format: add <name> <phone>",
         )
 
-    name, prev_phone, new_phone = args
+    def validate(self, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and phone are required.")
 
-    record = address_book.find(name)
-    if record:
-        record.edit_phone(prev_phone, new_phone)
-        return "Contact updated."
-    else:
-        return "Contact is not found."
+        return True
 
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name, phone = args
 
-@input_error
-def delete_contact_handler(address_book: AddressBook, args):
-    if len(args) != 2:
-        raise InvalidCommandError("delete", "Name and phone are required.")
+        record = address_book.find(name)
+        if record:
+            record.add_phone(phone)
+            return "Contact updated."
 
-    name, phone = args
+        record = Record(name)
+        record.add_phone(phone)
 
-    record = address_book.find(name)
-    if record:
-        record.delete_phone(phone)
-        return "Contact updated."
-    else:
-        return "Contact is not found."
+        address_book.add_record(record)
+
+        return "Contact added."
 
 
-@input_error
-def show_phones_handler(address_book: AddressBook, args):
-    if len(args) != 1:
-        raise InvalidCommandError("phones", "Name is required.")
+class ChangeContactCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "change",
+            "Change a phone number of a contact. Format: change <name> <prev_phone> <new_phone>",
+        )
 
-    name = args[0]
+    def validate(self, args):
+        if len(args) != 3:
+            raise InvalidCommandError(
+                self.name, "Name, previous phone and new phone are required."
+            )
 
-    record = address_book.find(name)
-    if record:
-        return str(record)
-    else:
-        return "Contact is not found."
+        return True
 
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name, prev_phone, new_phone = args
 
-@input_error
-def show_all_handler(address_book: AddressBook, _):
-    return str(address_book)
-
-
-@input_error
-def add_birthday_handler(address_book: AddressBook, args):
-    if len(args) != 2:
-        raise InvalidCommandError("add-birthday", "Name and birthday are required.")
-
-    name, birthday = args
-
-    record = address_book.find(name)
-    if record:
-        record.add_birthday(birthday)
-        return "Birthday added."
-    else:
-        return "Contact is not found."
+        record = address_book.find(name)
+        if record:
+            record.edit_phone(prev_phone, new_phone)
+            return "Contact updated."
+        else:
+            return "Contact is not found."
 
 
-@input_error
-def show_birthday_handler(address_book: AddressBook, args):
-    if len(args) != 1:
-        raise InvalidCommandError("show-birthday", "Name is required.")
+class DeleteContactCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "delete",
+            "Delete a phone number of a contact. Format: delete <name> <phone>",
+        )
 
-    name = args[0]
+    def validate(self, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and phone are required.")
 
-    record = address_book.find(name)
-    if record:
-        return str(record.birthday)
-    else:
-        return "Contact is not found."
+        return True
+
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name, phone = args
+
+        record = address_book.find(name)
+        if record:
+            record.delete_phone(phone)
+            return "Contact updated."
+        else:
+            return "Contact is not found."
 
 
-@input_error
-def show_birthdays_handler(address_book: AddressBook, _):
-    return address_book.get_birthdays_per_week()
+class ShowPhonesCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "phones",
+            "Show all phones of a contact. Format: phones <name>",
+        )
+
+    def validate(self, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        return True
+
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name = args[0]
+
+        record = address_book.find(name)
+        if record:
+            return str(record)
+        else:
+            return "Contact is not found."
 
 
-COMMANDS = {
-    hello_command_handler: ("hello",),
-    add_contact_handler: ("add",),
-    change_contact_handler: ("change",),
-    delete_contact_handler: ("delete",),
-    show_phones_handler: ("phones",),
-    show_all_handler: ("all",),
-    add_birthday_handler: ("add-birthday",),
-    show_birthday_handler: ("show-birthday",),
-    show_birthdays_handler: ("birthdays",),
-}
+class ShowAllContactsCommand(Command):
+    def __init__(self):
+        super().__init__("all", "Show all contacts.")
+
+    def execute(self, address_book: AddressBook, _):
+        return str(address_book)
+
+
+class AddBirthdayCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "add-birthday",
+            "Add a birthday to a contact. Format: add-birthday <name> <birthday>",
+        )
+
+    def validate(self, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and birthday are required.")
+
+        return True
+
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name, birthday = args
+
+        record = address_book.find(name)
+        if record:
+            record.add_birthday(birthday)
+            return "Birthday added."
+        else:
+            return "Contact is not found."
+
+
+class ShowBirthdayCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "show-birthday",
+            "Show a birthday of a contact. Format: show-birthday <name>",
+        )
+
+    def validate(self, args):
+        if len(args) != 1:
+            raise InvalidCommandError(self.name, "Name is required.")
+
+        return True
+
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name = args[0]
+
+        record = address_book.find(name)
+        if record:
+            return str(record.birthday)
+        else:
+            return "Contact is not found."
+
+
+class ShowBirthdaysCommand(Command):
+    def __init__(self):
+        super().__init__("birthdays", "Show all birthdays per week.")
+
+    def execute(self, address_book: AddressBook, _):
+        return address_book.get_birthdays_per_week()
+
+
+class ExitCommand(Command):
+    def __init__(self):
+        super().__init__("exit", "Exit the program.", alias="close", is_final=True)
+
+    def execute(self, *_):
+        return "Good bye!"
+
+
+class HelpCommand(Command):
+    def __init__(self):
+        super().__init__("help", "Show all available commands.")
+
+    def execute(self, *_):
+        return "\n".join(str(c) for c in COMMANDS)
+
+
+COMMANDS = [
+    HelloCommand(),
+    AddContactCommand(),
+    ChangeContactCommand(),
+    DeleteContactCommand(),
+    ShowPhonesCommand(),
+    ShowAllContactsCommand(),
+    AddBirthdayCommand(),
+    ShowBirthdayCommand(),
+    ShowBirthdaysCommand(),
+    ExitCommand(),
+    HelpCommand(),
+]
+
+COMMANDS_MAP = {(c.name, c.alias): c for c in COMMANDS}

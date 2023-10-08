@@ -11,7 +11,12 @@ class Record:
         self.phones: list[Phone] = []
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, phones: {', '.join(p.value for p in self.phones)}"
+        result = f"Contact name: {self.name.value}, phones: {', '.join(p.value for p in self.phones)}"
+
+        if self.birthday:
+            result += f", birthday: {self.birthday.value}"
+
+        return result
 
     def add_phone(self, phone: str):
         self.phones.append(Phone(phone))

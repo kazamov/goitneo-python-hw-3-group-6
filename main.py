@@ -1,5 +1,5 @@
 from address_book import AddressBook
-from commands import COMMANDS
+from commands import COMMANDS_MAP
 
 
 def parse_input(user_input):
@@ -14,20 +14,22 @@ def main():
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
-        command, *args = parse_input(user_input)
+        command_name, *args = parse_input(user_input)
 
-        if command in ["close", "exit"]:
-            print("Good bye!")
-            break
-
-        command_handler = None
-        for handler, keys in COMMANDS.items():
-            if command in keys:
-                command_handler = handler
+        command_object = None
+        for keys, handler in COMMANDS_MAP.items():
+            if command_name in keys:
+                command_object = handler
                 break
 
-        if command_handler:
-            print(command_handler(address_book, args))
+        if command_object:
+            if not command_object.validate(args):
+                continue
+
+            print(f"\n{command_object.execute(address_book, args)}\n")
+
+            if command_object.is_final:
+                break
         else:
             print("Unknown command.")
 
