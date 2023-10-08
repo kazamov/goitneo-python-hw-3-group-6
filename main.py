@@ -1,4 +1,4 @@
-from address_book.address_book import AddressBook
+from address_book import AddressBook
 from commands import COMMANDS
 
 
@@ -29,7 +29,7 @@ def main():
         if command_handler:
             print(command_handler(address_book, args))
         else:
-            print("Invalid command.")
+            print("Unknown command.")
 
 
 if __name__ == "__main__":
