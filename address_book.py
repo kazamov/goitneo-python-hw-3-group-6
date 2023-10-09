@@ -14,7 +14,7 @@ class Record:
         result = f"Contact name: {self.name.value}, phones: {', '.join(p.value for p in self.phones)}"
 
         if self.birthday:
-            result += f", birthday: {self.birthday.value}"
+            result += f", birthday: {str(self.birthday)}"
 
         return result
 

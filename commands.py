@@ -46,26 +46,38 @@ class AddContactCommand(Command):
     def __init__(self):
         super().__init__(
             "add",
-            "Add a new contact. Format: add <name> <phone>",
+            "Add a new contact. Format: add <name> <phone> [birthday]",
         )
 
     def validate(self, args):
-        if len(args) != 2:
+        if len(args) < 2:
             raise InvalidCommandError(self.name, "Name and phone are required.")
 
         return True
 
     @input_error
     def execute(self, address_book: AddressBook, args):
-        name, phone = args
+        name = ""
+        phone = ""
+        birthday = None
+
+        try:
+            name, phone, birthday = args
+        except ValueError:
+            name, phone = args
 
         record = address_book.find(name)
         if record:
             record.add_phone(phone)
+            if birthday:
+                record.add_birthday(birthday)
             return "Contact updated."
 
         record = Record(name)
         record.add_phone(phone)
+
+        if birthday:
+            record.add_birthday(birthday)
 
         address_book.add_record(record)
 
@@ -76,11 +88,11 @@ class ChangeContactCommand(Command):
     def __init__(self):
         super().__init__(
             "change",
-            "Change a phone number of a contact. Format: change <name> <prev_phone> <new_phone>",
+            "Change a phone number of a contact. Format: change <name> <prev_phone> <new_phone> [birthday]",
         )
 
     def validate(self, args):
-        if len(args) != 3:
+        if len(args) < 3:
             raise InvalidCommandError(
                 self.name, "Name, previous phone and new phone are required."
             )
@@ -89,11 +101,23 @@ class ChangeContactCommand(Command):
 
     @input_error
     def execute(self, address_book: AddressBook, args):
-        name, prev_phone, new_phone = args
+        name = ""
+        prev_phone = ""
+        new_phone = ""
+        birthday = None
+
+        try:
+            name, prev_phone, new_phone, birthday = args
+        except ValueError:
+            name, prev_phone, new_phone = args
 
         record = address_book.find(name)
         if record:
             record.edit_phone(prev_phone, new_phone)
+
+            if birthday:
+                record.add_birthday(birthday)
+
             return "Contact updated."
         else:
             return "Contact is not found."
@@ -124,11 +148,11 @@ class DeleteContactCommand(Command):
             return "Contact is not found."
 
 
-class ShowPhonesCommand(Command):
+class ShowContactCommand(Command):
     def __init__(self):
         super().__init__(
-            "phones",
-            "Show all phones of a contact. Format: phones <name>",
+            "show",
+            "Show contact information. Format: show <name>",
         )
 
     def validate(self, args):
@@ -181,6 +205,31 @@ class AddBirthdayCommand(Command):
             return "Contact is not found."
 
 
+class ChangeBirthdayCommand(Command):
+    def __init__(self):
+        super().__init__(
+            "change-birthday",
+            "Change a birthday of a contact. Format: change-birthday <name> <birthday>",
+        )
+
+    def validate(self, args):
+        if len(args) != 2:
+            raise InvalidCommandError(self.name, "Name and birthday are required.")
+
+        return True
+
+    @input_error
+    def execute(self, address_book: AddressBook, args):
+        name, birthday = args
+
+        record = address_book.find(name)
+        if record:
+            record.add_birthday(birthday)
+            return "Birthday updated."
+        else:
+            return "Contact is not found."
+
+
 class ShowBirthdayCommand(Command):
     def __init__(self):
         super().__init__(
@@ -207,7 +256,7 @@ class ShowBirthdayCommand(Command):
 
 class ShowBirthdaysCommand(Command):
     def __init__(self):
-        super().__init__("birthdays", "Show all birthdays per week.")
+        super().__init__("show-birthdays", "Show all birthdays per next 7 days.")
 
     def execute(self, address_book: AddressBook, _):
         return address_book.get_birthdays_per_week()
@@ -223,9 +272,20 @@ class ExitCommand(Command):
 
 class HelpCommand(Command):
     def __init__(self):
-        super().__init__("help", "Show all available commands.")
+        super().__init__(
+            "help",
+            "Show all available commands or a single command info. Format: help [command]",
+        )
 
-    def execute(self, *_):
+    def execute(self, _, args):
+        if len(args) > 0:
+            command_name = args[0]
+            command = get_command(command_name)
+            if command:
+                return str(command)
+
+            return f"Command '{command_name}' is not found."
+
         return "\n".join(str(c) for c in COMMANDS)
 
 
@@ -234,9 +294,10 @@ COMMANDS = [
     AddContactCommand(),
     ChangeContactCommand(),
     DeleteContactCommand(),
-    ShowPhonesCommand(),
+    ShowContactCommand(),
     ShowAllContactsCommand(),
     AddBirthdayCommand(),
+    ChangeBirthdayCommand(),
     ShowBirthdayCommand(),
     ShowBirthdaysCommand(),
     ExitCommand(),
@@ -244,3 +305,12 @@ COMMANDS = [
 ]
 
 COMMANDS_MAP = {(c.name, c.alias): c for c in COMMANDS}
+
+
+def get_command(command_name: str):
+    command = None
+    for keys, handler in COMMANDS_MAP.items():
+        if command_name in keys:
+            command = handler
+            break
+    return command

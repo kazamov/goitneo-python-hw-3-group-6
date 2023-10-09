@@ -1,2 +1,6 @@
 # goitneo-python-hw-3-group-6
-Neoversity home tasks, Group-6 (Vanilla Gorrilaz), Zakir Nuriiev
+
+Address Book application. It has an assistant feature that allows you
+to work with contacts.
+
+To see all available commands run "help" command after you started an application.
