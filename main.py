@@ -1,10 +1,8 @@
 from address_book import AddressBook
-from commands import COMMANDS_MAP, get_command
-from pickle import dump, load
-from pathlib import Path
+from commands import get_command
 
 
-ADDRESS_BOOK_FILE = "cache/address_book.pickle"
+ADDRESS_BOOK_FILENAME = "address_book.pickle"
 
 
 def parse_input(user_input):
@@ -13,22 +11,9 @@ def parse_input(user_input):
     return cmd, *args
 
 
-def save_address_book(address_book):
-    Path("cache").mkdir(exist_ok=True)
-    with open(ADDRESS_BOOK_FILE, "wb") as f:
-        dump(address_book, f)
-
-
-def load_address_book():
-    try:
-        with open(ADDRESS_BOOK_FILE, "rb") as f:
-            return load(f)
-    except FileNotFoundError:
-        return AddressBook()
-
-
 def main():
-    address_book = load_address_book()
+    address_book = AddressBook()
+    address_book.load(ADDRESS_BOOK_FILENAME)
 
     print("Welcome to the assistant bot!")
     while True:
@@ -38,13 +23,10 @@ def main():
         command_object = get_command(command_name)
 
         if command_object:
-            if not command_object.validate(args):
-                continue
-
             print(f"\n{command_object.execute(address_book, args)}\n")
 
             if command_object.is_final:
-                save_address_book(address_book)
+                address_book.save(ADDRESS_BOOK_FILENAME)
                 break
         else:
             print("Unknown command.")

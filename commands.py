@@ -27,9 +27,6 @@ class Command:
     def __str__(self):
         return f"{self.name} - {self.description}"
 
-    def validate(self, args):
-        return True
-
     def execute(self, address_book: AddressBook, args):
         pass
 
@@ -49,14 +46,11 @@ class AddContactCommand(Command):
             "Add a new contact. Format: add <name> <phone> [birthday]",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) < 2:
             raise InvalidCommandError(self.name, "Name and phone are required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name = ""
         phone = ""
         birthday = None
@@ -91,16 +85,13 @@ class ChangeContactCommand(Command):
             "Change a phone number of a contact. Format: change <name> <prev_phone> <new_phone> [birthday]",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) < 3:
             raise InvalidCommandError(
                 self.name, "Name, previous phone and new phone are required."
             )
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name = ""
         prev_phone = ""
         new_phone = ""
@@ -130,14 +121,11 @@ class DeleteContactCommand(Command):
             "Delete a phone number of a contact. Format: delete <name> <phone>",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and phone are required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name, phone = args
 
         record = address_book.find(name)
@@ -155,14 +143,11 @@ class ShowContactCommand(Command):
             "Show contact information. Format: show <name>",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) != 1:
             raise InvalidCommandError(self.name, "Name is required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name = args[0]
 
         record = address_book.find(name)
@@ -187,14 +172,11 @@ class AddBirthdayCommand(Command):
             "Add a birthday to a contact. Format: add-birthday <name> <birthday>",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and birthday are required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name, birthday = args
 
         record = address_book.find(name)
@@ -212,14 +194,11 @@ class ChangeBirthdayCommand(Command):
             "Change a birthday of a contact. Format: change-birthday <name> <birthday>",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) != 2:
             raise InvalidCommandError(self.name, "Name and birthday are required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name, birthday = args
 
         record = address_book.find(name)
@@ -237,14 +216,11 @@ class ShowBirthdayCommand(Command):
             "Show a birthday of a contact. Format: show-birthday <name>",
         )
 
-    def validate(self, args):
+    @input_error
+    def execute(self, address_book: AddressBook, args):
         if len(args) != 1:
             raise InvalidCommandError(self.name, "Name is required.")
 
-        return True
-
-    @input_error
-    def execute(self, address_book: AddressBook, args):
         name = args[0]
 
         record = address_book.find(name)
